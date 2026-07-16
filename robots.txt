@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://forever-bio-store01.netlify.app/sitemap.xml
+
+# Disallow admin from indexing
+Disallow: /admin/

@@ -1,0 +1,46 @@
+backend:
+  name: git-gateway
+  branch: main
+
+media_folder: "images"
+public_folder: "/images"
+
+collections:
+  - name: "products"
+    label: "المنتجات"
+    label_singular: "منتج"
+    folder: "content/products"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - {label: "اسم المنتج", name: "title", widget: "string"}
+      - {label: "الفئة", name: "category", widget: "select", options: ["بشرة", "شعر", "مفاصل", "أطفال", "مناعة", "طاقة", "باك"]}
+      - {label: "الصورة", name: "image", widget: "image"}
+      - {label: "الثمن (درهم)", name: "price", widget: "number"}
+      - {label: "الثمن القديم", name: "old_price", widget: "number", required: false}
+      - {label: "الفائدة المختصرة", name: "benefit", widget: "string"}
+      - {label: "الوصف", name: "description", widget: "text", required: false}
+      - {label: "كلمات البحث", name: "tags", widget: "string", hint: "مثلا: الصبار مفاصل أطفال"}
+
+  - name: "packs"
+    label: "الباكات"
+    label_singular: "باك"
+    folder: "content/packs"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - {label: "اسم الباك", name: "title", widget: "string"}
+      - {label: "الصورة", name: "image", widget: "image"}
+      - {label: "الثمن", name: "price", widget: "number"}
+      - {label: "المنتجات المدرجة", name: "includes", widget: "list", field: {label: "منتج", name: "product", widget: "string"}}
+      - {label: "الفائدة", name: "benefit", widget: "text"}
+
+  - name: "settings"
+    label: "إعدادات المتجر"
+    files:
+      - file: "content/settings/general.json"
+        label: "إعدادات عامة"
+        name: "general"
+        fields:
+          - {label: "رقم واتساب", name: "whatsapp", widget: "string", default: "0639900345"}
+          - {label: "اسم المتجر", name: "store_name", widget: "string", default: "Forever Bio Store Maroc"}
