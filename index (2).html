@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forever Bio Store - متجر الطبيعة</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+body { background:#f8fdf8; color:#333; }
+header { background: linear-gradient(135deg,#2e7d32,#66bb6a); color:white; padding:20px; text-align:center; }
+header h1 { font-size:28px; margin-bottom:5px; }
+.products { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:20px; padding:30px; max-width:1200px; margin:auto; }
+.card { background:white; border-radius:15px; overflow:hidden; box-shadow:0 4px 15px rgba(0,0,0,0.1); transition:0.3s; }
+.card:hover { transform:translateY(-5px); }
+.card img { width:100%; height:250px; object-fit:cover; background:#eee; }
+.card-body { padding:15px; }
+.card-body h3 { color:#2e7d32; margin-bottom:8px; }
+.card-body p { font-size:14px; color:#666; height:40px; overflow:hidden; }
+.price { color:#e65100; font-weight:bold; font-size:18px; margin:10px 0; }
+.btn { display:block; background:#25D366; color:white; text-align:center; padding:12px; border-radius:8px; text-decoration:none; font-weight:bold; }
+.loading { text-align:center; padding:50px; font-size:18px; }
+.admin-link { position:fixed; bottom:20px; left:20px; background:#333; color:white; padding:10px 15px; border-radius:20px; text-decoration:none; font-size:12px; }
+</style>
+</head>
+<body>
+<header>
+<h1>🌿 Forever Bio Store</h1>
+<p>منتجات طبيعية 100% - توصيل لجميع المدن</p>
+</header>
+
+<div id="products" class="products">
+<div class="loading">⏳ كنجبد المنتجات...</div>
+</div>
+
+<a href="/admin" class="admin-link">لوحة التحكم</a>
+
+<script>
+const repo = "mohcinegui12-boop/forever-bio-store01";
+const apiUrl = `https://api.github.com/repos/${repo}/contents/content/products`;
+
+async function parseFrontMatter(md){
+  // Simple frontmatter parser
+  try{
+    const match = md.match(/---\n([\s\S]*?)\n---/);
+    if(!match) return null;
+    const fm = match[1];
+    const data = {};
+    fm.split('\n').forEach(line=>{
+      const [key,...rest] = line.split(':');
+      if(!key || !rest.length) return;
+      let value = rest.join(':').trim();
+      // remove quotes
+      value = value.replace(/^"|"$/g,'').replace(/^'|'$/g,'');
+      data[key.trim()] = value;
+    });
+    // get description after ---
+    const desc = md.split('---').slice(2).join('---').trim().substring(0,120);
+    data.description = data.description || desc;
+    return data;
+  }catch(e){ return null; }
+}
+
+async function loadProducts(){
+  const container = document.getElementById('products');
+  try{
+    const res = await fetch(apiUrl);
+    const files = await res.json();
+    if(!Array.isArray(files)){ throw new Error("API error"); }
+    // filter .md except example
+    const mdFiles = files.filter(f=>f.name.endsWith('.md') && f.name!=='example.md');
+    if(mdFiles.length===0){
+      container.innerHTML = "<div class='loading'>مازال ما كاين حتى منتج</div>";
+      return;
+    }
+    let html = "";
+    for(let file of mdFiles){
+      try{
+        const rawRes = await fetch(file.download_url);
+        const mdText = await rawRes.text();
+        const product = await parseFrontMatter(mdText);
+        if(!product) continue;
+        const title = product.title || product.name || file.name;
+        const price = product.price || product.prix || "—";
+        const image = product.image || product.thumbnail || "https://via.placeholder.com/300x300?text=Forever+Bio";
+        const desc = product.description || "";
+        // ensure image is full URL
+        let imgUrl = image;
+        if(imgUrl.startsWith('/')) imgUrl = `https://raw.githubusercontent.com/${repo}/main${imgUrl}`;
+        html += `
+        <div class="card">
+          <img src="${imgUrl}" onerror="this.src='https://via.placeholder.com/300?text=No+Image'">
+          <div class="card-body">
+            <h3>${title}</h3>
+            <p>${desc}</p>
+            <div class="price">${price} درهم</div>
+            <a class="btn" href="https://wa.me/212600000000?text=بغيت ${encodeURIComponent(title)}" target="_blank">طلب عبر واتساب</a>
+          </div>
+        </div>`;
+      }catch(e){ console.log("error loading", file.name, e); }
+    }
+    if(!html) html = "<div class='loading'>خطأ في قراءة المنتجات</div>";
+    container.innerHTML = html;
+  }catch(err){
+    console.error(err);
+    container.innerHTML = "<div class='loading'>❌ مقدرتش نجيب المنتجات، جرب Refresh<br>"+err+"</div>";
+  }
+}
+
+loadProducts();
+</script>
+</body>
+</html>
